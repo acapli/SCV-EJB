@@ -288,7 +288,7 @@ public class UsuarioFacade {
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void actualizarRolesUsuario(String sesion, Integer idUsuario, Boolean roles[]) throws EJBWithRollBackException {
         
-        
+        logger.info("----Accedió actualizarRolesUsuario UsuarioFacade----");
         
         try {
             usuarioEAO.getUsuarioBySesion(sesion);
@@ -304,9 +304,11 @@ public class UsuarioFacade {
             try {
                 if (roles[i]) {
                     //asignar
+                    logger.info("----Accedió if (roles[i]) de UsuarioFacade----");
                     usuarioFacade.asignarRolUsuario(sesion, idUsuario, valoresRoles[i]);
                 } else {
                     //desasignar
+                    logger.info("----Accedió else de UsuarioFacade----");
                     usuarioFacade.eliminarRolUsuario(sesion, idUsuario, valoresRoles[i]);
                 }
             } catch (Exception ex) {
@@ -349,6 +351,9 @@ public class UsuarioFacade {
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void asignarRolUsuario(String sesion, Integer idUsuario, Integer idRol) throws EJBWithRollBackException {
         logger.info("IN:" + sesion);
+        logger.info("---Accesdio a asignarRolUsuario de UsuarioFacade ");
+        
+        
         Usuarios usuario = null;
         Roles rol = null;
         try {
@@ -369,6 +374,8 @@ public class UsuarioFacade {
         }
 
         if (rolUsuario == null) {
+            
+            logger.info("---Accedio a if (rolUsuario == null) de UsuarioFacade---------");
             //no tiene asignado ese rol
             //entonces asignar
             rolUsuario = new RolesUsuarios();
