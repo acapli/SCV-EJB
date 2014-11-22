@@ -1,4 +1,4 @@
-/*
+                  /*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
@@ -12,37 +12,56 @@ import javax.ejb.TransactionAttributeType;
 import javax.ejb.TransactionManagement;
 import javax.ejb.TransactionManagementType;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.persistence.QueryTimeoutException;
 import javax.persistence.TransactionRequiredException;
-
-import py.smtr.ejb.entities.Productos;
-import py.smtr.ejb.entities.ProductosProveedores;
-import py.smtr.ejb.entities.Proveedores;
+import py.smtr.ejb.entities.Clientes;
 import py.smtr.ejb.exceptions.EJBWithOutRollBackException;
 import py.smtr.ejb.exceptions.EJBWithRollBackException;
 import py.smtr.ejb.utilities.ConstantesEJB;
 
 
+/**
+ *
+ * @author Strogg
+ */
 @Stateless
 @TransactionManagement(TransactionManagementType.CONTAINER)
-public class ProductosProveedoresEAO{
+public class ClientesEAO {
 
     @PersistenceContext(unitName = "TPWeb2011-ejbPU")
     private EntityManager em;
-    private Logger logger = Logger.getLogger("log");
+    
+     private Logger logger = Logger.getLogger("log");
 
     protected EntityManager getEntityManager() {
         return em;
     }
     
     //@Override
-    public List<ProductosProveedores> getProductosProveedoresByProducto(Productos producto) throws EJBWithOutRollBackException {
-        logger.info("Entro en ProductosProveedoresEAO:" + producto);
-        
-        List<ProductosProveedores> listProductos = null;
+    //@TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public int getCantidadClientes() {
+        javax.persistence.criteria.CriteriaQuery cq = getEntityManager().getCriteriaBuilder().createQuery();
+        javax.persistence.criteria.Root<Clientes> rt = cq.from(Clientes.class);
+        cq.select(getEntityManager().getCriteriaBuilder().count(rt));
+        javax.persistence.Query q = getEntityManager().createQuery(cq);
+        return ((Long) q.getSingleResult()).intValue();
+    }
+    
+
+    public List<Clientes> obtenerTodosClientes(Integer offset, Integer limit) throws EJBWithOutRollBackException {
+        List<Clientes> clientes = null;
         try {
-            listProductos = (List<ProductosProveedores>) em.createNamedQuery("ProductosProveedores.findByIdProducto").setParameter("idProducto", producto).getResultList();
+            Query query = em.createNamedQuery("Clientes.findAll");
+            if (offset != null) {
+                query.setFirstResult(offset);
+            }
+            if (limit != null) {
+                query.setMaxResults(limit);
+            }
+            clientes = (List<Clientes>) query.getResultList();
         } catch (QueryTimeoutException ex) {
             logger.info("OUT:" + "Se ha perdido la conexión a la base de datos.");
             throw new EJBWithOutRollBackException("Se ha perdido la conexión a la base de datos.");
@@ -53,16 +72,18 @@ public class ProductosProveedoresEAO{
             logger.info("OUT:" + ConstantesEJB.ERROR_INESPERADO);
             throw new EJBWithOutRollBackException(ConstantesEJB.ERROR_INESPERADO);
         }
-        logger.info("OUT:" + listProductos);
-        return listProductos;
+        return clientes;
     }
     
-    //@Override
-    public ProductosProveedores getProductosProveedoresByProductoProveedor(Productos producto, Proveedores proveedor) throws EJBWithOutRollBackException {
-        logger.info("IN:" + producto+";"+proveedor);
-        ProductosProveedores productoProveedor = null;
+
+    public Clientes getClientesByRUC(String ruc) throws EJBWithOutRollBackException {
+        logger.info("IN:" + ruc);
+        Clientes cliente = null;
         try {
-            productoProveedor = (ProductosProveedores) em.createNamedQuery("ProductosProveedores.findByIdProductoIdProveedor").setParameter("idProducto", producto).setParameter("idProveedor", proveedor).getSingleResult();
+            cliente = (Clientes) em.createNamedQuery("Clientes.findByRuc").setParameter("ruc", ruc).getSingleResult();
+        } catch (NoResultException ex) {
+            logger.info("OUT:" + "No se encuentra el cliente con R.U.C.: "+ruc);
+            throw new EJBWithOutRollBackException("No se encuentra el cliente con R.U.C.: "+ruc);
         } catch (QueryTimeoutException ex) {
             logger.info("OUT:" + "Se ha perdido la conexión a la base de datos.");
             throw new EJBWithOutRollBackException("Se ha perdido la conexión a la base de datos.");
@@ -73,16 +94,15 @@ public class ProductosProveedoresEAO{
             logger.info("OUT:" + ConstantesEJB.ERROR_INESPERADO);
             throw new EJBWithOutRollBackException(ConstantesEJB.ERROR_INESPERADO);
         }
-        logger.info("OUT:" + productoProveedor);
-        return productoProveedor;
+        logger.info("OUT:" + cliente);
+        return cliente;
     }
-    
-   // @Override
+
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public void guardarProductosProveedores(ProductosProveedores productosProveedores) throws EJBWithRollBackException {
-        logger.info("IN:" + productosProveedores);
+    public void guardarCliente(Clientes cliente) throws EJBWithRollBackException {
+        logger.info("IN:" + cliente);
         try {
-            em.persist(productosProveedores);
+            em.persist(cliente);
         } catch (Exception ex) {
             logger.info("OUT:" + ConstantesEJB.ERROR_INESPERADO);
             throw new EJBWithRollBackException(ConstantesEJB.ERROR_INESPERADO);
@@ -90,26 +110,28 @@ public class ProductosProveedoresEAO{
         logger.info("OUT:OK");
     }
     
-    //@Override
+
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public void borrarProductosProveedores(ProductosProveedores productosProveedores) throws EJBWithRollBackException {
-        logger.info("IN:" + productosProveedores);
+    public void borrarCliente(Clientes cliente) throws EJBWithRollBackException {
+        logger.info("IN:" + cliente);
         try {
-            em.remove(productosProveedores);
+            em.remove(cliente);
         } catch (Exception ex) {
-            logger.info("OUT:" + "No se pudo eliminar la relacion entre " + productosProveedores.getIdProducto().getNombre() + " y " + productosProveedores.getIdProveedor().getNombre());
-            throw new EJBWithRollBackException("No se pudo eliminar la relacion entre " + productosProveedores.getIdProducto().getNombre() + " y " + productosProveedores.getIdProveedor().getNombre());
+            logger.info("OUT:" + "No se pudo eliminar el cliente: " + cliente.getNombre());
+            throw new EJBWithRollBackException("No se pudo eliminar el cliente: " + cliente.getNombre());
         }
         logger.info("OUT:OK");
     }
     
-    //@Override
-    public List<ProductosProveedores> getProductosProveedoresByProveedor(Proveedores proveedor) throws EJBWithOutRollBackException {
-        logger.info("IN getProductosProveedoresByProveedor en el EAO:" + proveedor);
-        
-        List<ProductosProveedores> listProductos = null;
+
+    public Clientes getClienteById(Integer id) throws EJBWithOutRollBackException {
+        logger.info("IN:" + id);
+        Clientes cliente = null;
         try {
-            listProductos = (List<ProductosProveedores>) em.createNamedQuery("ProductosProveedores.findByIdProveedor").setParameter("idProveedor", proveedor).getResultList();
+            cliente = (Clientes) em.createNamedQuery("Clientes.findById").setParameter("id", id).getSingleResult();
+        } catch (NoResultException ex) {
+            logger.info("OUT:" + "No existe el cliente con id: " + id);
+            throw new EJBWithOutRollBackException("No existe el cliente con id: " + id);
         } catch (QueryTimeoutException ex) {
             logger.info("OUT:" + "Se ha perdido la conexión a la base de datos.");
             throw new EJBWithOutRollBackException("Se ha perdido la conexión a la base de datos.");
@@ -120,8 +142,7 @@ public class ProductosProveedoresEAO{
             logger.info("OUT:" + ConstantesEJB.ERROR_INESPERADO);
             throw new EJBWithOutRollBackException(ConstantesEJB.ERROR_INESPERADO);
         }
-        logger.info("OUT:" + listProductos);
-        return listProductos;
+        logger.info("OUT:" + cliente);
+        return cliente;
     }
-    
 }

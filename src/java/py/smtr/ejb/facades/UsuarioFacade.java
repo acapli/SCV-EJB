@@ -11,6 +11,8 @@ import javax.ejb.Stateless;
 import javax.ejb.LocalBean;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import py.smtr.ejb.eao.RolEAO;
 import py.smtr.ejb.eao.RolesUsuariosEAO;
 import py.smtr.ejb.exceptions.EJBWithOutRollBackException;
@@ -28,20 +30,17 @@ import py.smtr.ejb.utilities.SessionGenerator;
 
 //@TransactionManagement(TransactionManagementType.CONTAINER)
 @Stateless
-@LocalBean
-
-
+//@LocalBean
+@TransactionManagement(TransactionManagementType.CONTAINER)
 public class UsuarioFacade {
 
     @EJB
     private UsuarioEAO usuarioEAO;
     @EJB
     private UsuarioFacade usuarioFacade;
-    
-     @EJB
+    @EJB
     private RolesUsuariosEAO rolesUsuarioEAO;
-     
-       @EJB
+    @EJB
     private RolEAO rolesEAO;
     
     //private Logger logger = Logger.getLogger("");
@@ -54,10 +53,8 @@ public class UsuarioFacade {
     public ResponseLogin login(String user, String pass) throws EJBWithRollBackException, Exception {
 
        logger.info("IN:" + user + ";****");
-       Usuarios usu = null;
-       
+       Usuarios usu = null;     
        logger.info("\n\n-----------------Accediendo a LoginUsuarioFACADE----------------\n\n");
-       
         try {
             usu = usuarioEAO.getUsuarioByLogin(user);
         } catch (EJBWithOutRollBackException ex) {
@@ -66,7 +63,6 @@ public class UsuarioFacade {
         }
       
         if (usu != null) {
-           
             if (usu.getPassword().equals(SHA512B64.encriptar(pass))) {
                 boolean exito = true;
                 String sesion = null;
@@ -74,37 +70,26 @@ public class UsuarioFacade {
                     logger.info("OUT:" + ConstantesEJB.USER_INACTIVO);
                     throw new EJBWithRollBackException(ConstantesEJB.USER_INACTIVO);
                 }
-               
                 while (exito) {
                     sesion = SessionGenerator.generarSesion(50);
                     exito = usuarioEAO.existeSesion(sesion);
                 }
-                
                 usu.setSesion(sesion);
                 List<RolesUsuarios> listaRolesUsuario = null;              //los roles del usuario...
-               
                 try {
-                    
                     listaRolesUsuario = rolesUsuarioEAO.obtenerRolesUsuarioByUsuario(usu);
-                    
-                     logger.info("Obtuvo lista de Roles!!");
-                    
-                } catch (EJBWithOutRollBackException ex) {
-                    
+                    logger.info("Obtuvo lista de Roles!!");
+                } catch (EJBWithOutRollBackException ex) {           
                     logger.info("OUT:" + ex.getMessage());
                     throw new EJBWithRollBackException(ex.getMessage());
                 }
-
                  Integer roles[] = {0, 0, 0, 0, 0};
                 for (RolesUsuarios rolUsuario : listaRolesUsuario) {
                     roles[rolUsuario.getIdRol().getId()] = rolUsuario.getIdRol().getId();
                     logger.info(" Se cargan los roles!!!" + roles[1]);
                 }
-                
                 usuarioEAO.guardarUsuario(usu);
-
-                return new ResponseLogin(usu.getNombre(), sesion, roles);
-                
+                return new ResponseLogin(usu.getNombre(), sesion, roles);              
             } else {
                 logger.info("OUT:" + ConstantesEJB.USER_PASS_INC);
                 throw new EJBWithRollBackException(ConstantesEJB.USER_PASS_INC);
@@ -131,7 +116,7 @@ public class UsuarioFacade {
         }
         /*******************************/
                 //hacer la logica del negocio
-        return "Noraaaaaaaaaaaaa";
+        return "hacer la logica del negocio";
     }
     
     
@@ -140,8 +125,7 @@ public class UsuarioFacade {
     public void guardarUsuario(String sesion, String username, String nombres, long documento, String email, String password, Boolean activo)throws Exception, EJBWithOutRollBackException{
          try {
         
-        logger.info("\n\n-----------------Accedió a UsuarioFacade----------------\n\n");
-        
+        logger.info("\n\n-----------------Accedió a UsuarioFacade----------------\n\n");    
         Usuarios nuevoUsuario = new Usuarios();
         nuevoUsuario.setNombre(nombres);
         nuevoUsuario.setLogin(username);
@@ -158,21 +142,12 @@ public class UsuarioFacade {
         nuevoUsuario.setPassword(passEncry);
         nuevoUsuario.setActivo(activo);
         nuevoUsuario.setCreated(new Date(System.currentTimeMillis()));
-
         usuarioEAO.guardarUsuario(nuevoUsuario);
-
         logger.info("OUT:OK");
-        
-        usuarioEAO.guardarUsuario(nuevoUsuario);
- 
-           
-        
+        usuarioEAO.guardarUsuario(nuevoUsuario);       
         } catch (Exception ex) {
             logger.info("\n\n----------------Pasó llamada a UsuarioEAO desde UsuarioFacade----------------\n\n");       
         }
-        
-        
-        
     }
     
     
@@ -211,27 +186,12 @@ public class UsuarioFacade {
         
     }
     
-    //@Override
-    //@TransactionAttribute(TransactionAttributeType.REQUIRED)
-    //public ResponseEntidad listarUsuarios(String sesion, Integer offset, Integer limit) throws EJBWithOutRollBackException {
-        //usuarioEAO.getUsuarioBySesion(sesion);
-    //    ResponseEntidad<Usuarios> resp = new ResponseEntidad<Usuarios>();
-    //    Integer cantidad = 0;
-    //    List<Usuarios> usuarios = null;
-    //    cantidad = usuarioEAO.getCantidadUsuarios();
-    //    usuarios = usuarioEAO.obtenerTodosUsuarios(offset, limit);
-    //    resp.setCantidadTotal(cantidad);
-    //    resp.setListaEntidad(usuarios);
-    //    return resp;
-    //}
-    
     //    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public ResponseEntidad listarUsuarios(String sesion, Integer offset, Integer limit) throws EJBWithOutRollBackException {
         logger.info("IN:" + sesion + ";" + offset + ";" + limit);
 
         usuarioEAO.getUsuarioBySesion(sesion);
-
         ResponseEntidad<Usuarios> resp = new ResponseEntidad<Usuarios>();
         Integer cantidad = 0;
         List<Usuarios> usuarios = null;
@@ -240,23 +200,8 @@ public class UsuarioFacade {
         resp.setCantidadTotal(cantidad);
         resp.setListaEntidad(usuarios);
         logger.info("OUT:" + cantidad + ";" + usuarios.toString());
-
         return resp;
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     
     
@@ -278,7 +223,6 @@ public class UsuarioFacade {
         usu.setActivo(activo);
         usu.setChanged(new Date(System.currentTimeMillis()));
         usuarioEAO.guardarUsuario(usu);
-
         logger.info("OUT:OK");
     }
     
@@ -298,7 +242,7 @@ public class UsuarioFacade {
         }
 
         //bue aqui viene el alambre...
-        Integer valoresRoles[] = {1, 2};
+        Integer valoresRoles[] = {1, 2 , 3, 4};
         for (int i = 0; i < roles.length; i++) {
             //nombreRoles[] = {"Administrador", "Comprador", "Vendedor", "Cajero"};
             try {
@@ -379,24 +323,24 @@ public class UsuarioFacade {
             //no tiene asignado ese rol
             //entonces asignar
             rolUsuario = new RolesUsuarios();
+            
+             logger.info("---Paso new RolesUsuarios();---------");
             rolUsuario.setIdRol(rol);
+             logger.info("---Paso setIdRol(rol)---------");
             rolUsuario.setIdUsuario(usuario);
+             logger.info("---Paso setIdUsuario(usuario)---------");
             rolUsuario.setActivo(true);
 
+           
+            
+            
+            logger.info("---" +rolUsuario.getIdRol().getNombre() +"---------"+rolUsuario.getIdUsuario().getNombre() +"---------");
+            
             rolesUsuarioEAO.guardarRolesUsuarios(rolUsuario);
         }
         logger.info("OUT:OK");
     }
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     
    //  @Override
@@ -412,7 +356,6 @@ public class UsuarioFacade {
         }
       */
         for (Integer id : listaIds) {
-            
             usuarioFacade.borrarUsuario(id);
         }
         logger.info("OUT:OK");
