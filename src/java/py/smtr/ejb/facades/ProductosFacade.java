@@ -301,7 +301,7 @@ public class ProductosFacade{
 
         ProductosProveedores productoProveedor = null;
         try {
-            //productoProveedor = productosProveedoresEAO.getProductosProveedoresByProductoProveedor(producto, proveedor);
+            productoProveedor = productosProveedoresEAO.getProductosProveedoresByProductoProveedor(producto, proveedor);
         } catch (Exception e) {
             //ya tiene asignado ese proveedor            
         }
@@ -314,7 +314,7 @@ public class ProductosFacade{
             productoProveedor.setCreated(new Date(System.currentTimeMillis()));
             productoProveedor.setActivo(true);
 
-            //productosProveedoresEAO.guardarProductosProveedores(productoProveedor);
+            productosProveedoresEAO.guardarProductosProveedores(productoProveedor);
         }
         logger.info("OUT:OK");
     }
@@ -351,6 +351,7 @@ public class ProductosFacade{
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void actualizarProveedoresProducto(String sesion, Integer idProducto, List<Proveedores> proveedores) throws EJBWithRollBackException {
         logger.info("IN:" + sesion);
+        logger.info("------------Accedio a actualizarProveedoresProducto de ProductosFacade-----------");
         try {
             usuarioEAO.getUsuarioBySesion(sesion);
         } catch (EJBWithOutRollBackException ex) {

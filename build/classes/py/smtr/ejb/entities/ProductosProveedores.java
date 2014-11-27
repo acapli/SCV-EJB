@@ -19,11 +19,12 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.validation.constraints.NotNull;
 import javax.xml.bind.annotation.XmlRootElement;
-
 /**
  *
  * @author Norita
@@ -32,10 +33,9 @@ import javax.xml.bind.annotation.XmlRootElement;
 @Table(name = "productos_proveedores")
 @XmlRootElement
 @NamedQueries({
-    
-    
     @NamedQuery(name = "ProductosProveedores.findAll", query = "SELECT p FROM ProductosProveedores p"),
     @NamedQuery(name = "ProductosProveedores.findByIdProveedor", query = "SELECT p FROM ProductosProveedores p WHERE p.idProveedor =:idProveedor"),
+    @NamedQuery(name = "ProductosProveedores.findByIdProductoIdProveedor", query = "SELECT p FROM ProductosProveedores p WHERE p.idProducto = :idProducto AND p.idProveedor = :idProveedor"),
     @NamedQuery(name = "ProductosProveedores.findById", query = "SELECT p FROM ProductosProveedores p WHERE p.id = :id"),
     @NamedQuery(name = "ProductosProveedores.findByIdProducto", query = "SELECT p FROM ProductosProveedores p WHERE p.idProducto = :idProducto"),
     @NamedQuery(name = "ProductosProveedores.findByActivo", query = "SELECT p FROM ProductosProveedores p WHERE p.activo = :activo"),
@@ -46,8 +46,11 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class ProductosProveedores implements Serializable {
     private static final long serialVersionUID = 1L;
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    //@GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
+    @GeneratedValue(generator="productos_proveedores_id_seq", strategy=GenerationType.SEQUENCE)
+    @SequenceGenerator(sequenceName="productos_proveedores_id_seq", name="productos_proveedores_id_seq", allocationSize=1)
+    @NotNull
     @Column(name = "id")
     private Integer id;
     @Column(name = "activo")
