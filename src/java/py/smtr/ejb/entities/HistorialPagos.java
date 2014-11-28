@@ -1,5 +1,5 @@
 /*
- Prueba del git 5
+ Prueba del git 6
  */
 
 package py.smtr.ejb.entities;
