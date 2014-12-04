@@ -1,7 +1,5 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+  Modificado por nora el 04/12/14
  */
 
 package py.smtr.ejb.entities;
